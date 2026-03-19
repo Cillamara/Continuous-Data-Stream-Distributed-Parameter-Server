@@ -1,7 +1,6 @@
 plugins {
     java
     application
-    id("com.google.protobuf") version "0.9.4"
 }
 
 group = "com.photon"
@@ -17,65 +16,36 @@ repositories {
 }
 
 dependencies {
-    // Kafka
     implementation("org.apache.kafka:kafka-clients:3.7.0")
-
-    // HDFS
     implementation("org.apache.hadoop:hadoop-client:3.4.0")
-
-    // etcd (IdRegistry)
     implementation("io.etcd:jetcd-core:0.7.7")
-
-    // Redis / CacheEventStore
     implementation("io.lettuce:lettuce-core:6.3.2.RELEASE")
-
-    // HBase / LogsEventStore
     implementation("org.apache.hbase:hbase-client:2.5.9")
-
-    // gRPC
     implementation("io.grpc:grpc-netty-shaded:1.63.0")
     implementation("io.grpc:grpc-protobuf:1.63.0")
     implementation("io.grpc:grpc-stub:1.63.0")
-
-    // Protobuf (event schemas)
     implementation("com.google.protobuf:protobuf-java:3.25.3")
-
-    // Prometheus metrics
     implementation("io.prometheus:simpleclient:0.16.0")
     implementation("io.prometheus:simpleclient_hotspot:0.16.0")
     implementation("io.prometheus:simpleclient_httpserver:0.16.0")
-
-    // Retry / resilience
     implementation("io.github.resilience4j:resilience4j-retry:2.2.0")
-
-    // Logging
     implementation("org.slf4j:slf4j-api:2.0.13")
     runtimeOnly("ch.qos.logback:logback-classic:1.5.6")
-
-    // Annotation processor needed for gRPC generated stubs
     compileOnly("javax.annotation:javax.annotation-api:1.3.2")
-}
 
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:3.25.3"
-    }
-    plugins {
-        create("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.63.0"
-        }
-    }
-    generateProtoTasks {
-        all().forEach {
-            it.plugins {
-                create("grpc")
-            }
-        }
-    }
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+    testImplementation("org.testcontainers:testcontainers:1.19.8")
+    testImplementation("org.testcontainers:junit-jupiter:1.19.8")
 }
 
 application {
     mainClass.set("com.photon.Main")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 configurations.all {
