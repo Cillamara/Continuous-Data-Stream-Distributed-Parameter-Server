@@ -1,6 +1,7 @@
 plugins {
     java
     application
+    id("com.google.protobuf") version "0.9.4"   // ← add this
 }
 
 group = "com.photon"
@@ -14,6 +15,9 @@ java {
 repositories {
     mavenCentral()
 }
+
+val grpcVersion     = "1.63.0"
+val protobufVersion = "3.25.3"
 
 dependencies {
     implementation("org.apache.kafka:kafka-clients:3.7.0")
@@ -38,6 +42,33 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
     testImplementation("org.testcontainers:testcontainers:1.19.8")
     testImplementation("org.testcontainers:junit-jupiter:1.19.8")
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:$protobufVersion"
+    }
+    plugins {
+        create("grpc") {
+            artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion"
+        }
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.plugins {
+                create("grpc")
+            }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir("build/generated/source/proto/main/grpc")
+            srcDir("build/generated/source/proto/main/java")
+        }
+    }
 }
 
 application {

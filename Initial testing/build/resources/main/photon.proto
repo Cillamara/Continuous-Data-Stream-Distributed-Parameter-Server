@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package photon;
+
+option java_package         = "com.photon.proto";
+option java_multiple_files  = true;
+
+// ── IdRegistry RPC surface ────────────────────────────────────────────────
+//
+// Mirrors the two operations described in the Photon paper (§2.1):
+//   Lookup  – has this event_id already been joined?
+//   Insert  – conditionally register an event_id (exactly-once gate)
+//
+// The server batches many Insert RPCs into a single etcd transaction
+// (server-side batching, §2.2.1) to amortise Paxos/etcd round-trip latency.
+
+service IdRegistryService {
+  rpc Lookup (LookupRequest)  returns (LookupResponse);
+  rpc Insert (InsertRequest)  returns (InsertResponse);
+}
+
+// ── Lookup ────────────────────────────────────────────────────────────────
+
+message LookupRequest {
+  fixed64 event_id = 1;  // packed EventId.value
+}
+
+message LookupResponse {
+  bool exists = 1;
+}
+
+// ── Insert ────────────────────────────────────────────────────────────────
+
+message InsertRequest {
+  fixed64 event_id      = 1;  // packed EventId.value (shard key + dedup key)
+  string  token         = 2;  // "host:pid:hlc" — identifies the requesting joiner
+                               // (used for crash-recovery retry detection, §3.3.2)
+  int64   hlc_timestamp = 3;  // full HLC of this event, for GC age checks
+                               // 0 = skip age check (e.g. during catch-up)
+}
+
+message InsertResponse {
+  enum Status {
+    SUCCESS        = 0;  // registered — joiner may write to output log
+    ALREADY_EXISTS = 1;  // duplicate — joiner must drop this event
+    RETRY          = 2;  // same joiner token already in registry — joiner can
+                         // safely re-write output (it crashed after registering
+                         // but before writing, §3.3.2)
+    TOO_OLD        = 3;  // event older than GC threshold — treat as unjoinable
+  }
+  Status status = 1;
+}
