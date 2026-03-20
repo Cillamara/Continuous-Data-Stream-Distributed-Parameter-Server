@@ -42,8 +42,9 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
-    testImplementation("org.testcontainers:testcontainers:1.19.8")
-    testImplementation("org.testcontainers:junit-jupiter:1.19.8")
+    testImplementation("org.testcontainers:testcontainers:1.21.3")
+    testImplementation("org.testcontainers:junit-jupiter:1.21.3")
+    testImplementation("org.testcontainers:kafka:1.21.3")
 }
 
 protobuf {
@@ -74,15 +75,35 @@ sourceSets {
 }
 
 application {
-    mainClass.set("com.photon.Main")
+    mainClass.set("com.photon.Benchmark")  // switch to "com.photon.Main" for production
 }
 
 tasks.test {
     useJUnitPlatform()
+    environment("DOCKER_HOST", "unix:///Users/liamcui/Library/Containers/com.docker.docker/Data/docker.raw.sock")
+    environment("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE", "/var/run/docker.sock")
+    environment("DOCKER_API_VERSION", "1.44")
+    systemProperty("api.version", "1.44")
+
+    testLogging {
+        showStandardStreams = true
+        events("passed", "failed", "skipped")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
 
 configurations.all {
     exclude(group = "org.mortbay.jetty")
     exclude(group = "javax.servlet", module = "servlet-api")
-    resolutionStrategy.force("io.netty:netty-all:4.1.110.Final")
+    resolutionStrategy.force(
+        "io.netty:netty-all:4.1.110.Final",
+        "io.grpc:grpc-netty:$grpcVersion",
+        "io.grpc:grpc-core:$grpcVersion",
+        "io.grpc:grpc-api:$grpcVersion",
+        "io.grpc:grpc-context:$grpcVersion",
+        "io.grpc:grpc-stub:$grpcVersion",
+        "io.grpc:grpc-protobuf:$grpcVersion",
+        "io.grpc:grpc-protobuf-lite:$grpcVersion",
+        "io.grpc:grpc-grpclb:$grpcVersion"
+    )
 }

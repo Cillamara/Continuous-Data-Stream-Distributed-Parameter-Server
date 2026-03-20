@@ -77,14 +77,12 @@ public class IDRegistryClient implements AutoCloseable {
                 .usePlaintext()   // TLS termination is handled at the infrastructure layer
                 .build();
 
-        this.stub = IdRegistryServiceGrpc.newBlockingStub(channel)
-                .withDeadlineAfter(RPC_DEADLINE.toMillis(), TimeUnit.MILLISECONDS);
+        this.stub = IdRegistryServiceGrpc.newBlockingStub(channel);
 
         this.token = buildToken();
 
         RetryConfig config = RetryConfig.custom()
                 .maxAttempts(MAX_ATTEMPTS)
-                .waitDuration(INITIAL_WAIT)
                 .intervalFunction(io.github.resilience4j.core.IntervalFunction
                         .ofExponentialRandomBackoff(INITIAL_WAIT, BACKOFF_MULTIPLIER, MAX_WAIT))
                 .retryOnException(IDRegistryClient::isRetryable)
@@ -110,8 +108,9 @@ public class IDRegistryClient implements AutoCloseable {
      */
     public boolean isAlreadyJoined(long eventId) {
         return Retry.decorateSupplier(retryPolicy, () -> {
-            LookupResponse response = stub.lookup(
-                    LookupRequest.newBuilder().setEventId(eventId).build());
+            LookupResponse response = stub
+                    .withDeadlineAfter(RPC_DEADLINE.toMillis(), TimeUnit.MILLISECONDS)
+                    .lookup(LookupRequest.newBuilder().setEventId(eventId).build());
             return response.getExists();
         }).get();
     }
@@ -128,7 +127,9 @@ public class IDRegistryClient implements AutoCloseable {
      */
     public InsertResponse.Status register(long eventId, long hlcTimestamp) {
         return Retry.decorateSupplier(retryPolicy, () -> {
-            InsertResponse response = stub.insert(InsertRequest.newBuilder()
+            InsertResponse response = stub
+                    .withDeadlineAfter(RPC_DEADLINE.toMillis(), TimeUnit.MILLISECONDS)
+                    .insert(InsertRequest.newBuilder()
                     .setEventId(eventId)
                     .setToken(token)
                     .setHlcTimestamp(hlcTimestamp)

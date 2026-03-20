@@ -9,6 +9,7 @@ services:
       ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
       ETCD_LISTEN_PEER_URLS: "http://0.0.0.0:2380"
       ETCD_INITIAL_ADVERTISE_PEER_URLS: "http://0.0.0.0:2380"
+      ETCD_INITIAL_CLUSTER: "default=http://0.0.0.0:2380"
     ports:
       - "2379:2379"
     healthcheck:
