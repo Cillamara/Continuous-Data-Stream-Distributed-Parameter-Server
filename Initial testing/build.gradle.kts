@@ -40,6 +40,8 @@ dependencies {
     implementation("org.apache.hadoop:hadoop-client:3.4.0")
     implementation("org.apache.hbase:hbase-client:2.5.9")
 
+    implementation("com.google.guava:guava:33.2.0-jre")
+
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
